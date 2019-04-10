@@ -20,6 +20,9 @@ opt = config_args(args)
 
 # forward_tree = torch.load('/af11/jjl5sw/deepENCODE/data/gene/forward_tree.pt')
 
+
+# CUDA_VISIBLE_DEVICES=1 python train.py -dataset sider -save_mode best -batch_size 32 -d_model 512 -d_inner_hid 512 -n_layers_enc 2 -n_layers_dec 2 -n_head 4 -epoch 50 -dropout 0.2 -dec_dropout 0.2 -lr 0.0002 -encoder 'graph' -decoder 'graph' -load_pretrained -test_only
+
 #CUDA_VISIBLE_DEVICES=1 python train.py -dataset bibtext -save_mode best -batch_size 32 -d_model 512 -d_inner_hid 512 -n_layers_enc 3 -n_layers_dec 3 -n_head 4 -epoch 50 -dropout 0.2 -dec_dropout 0.2 -lr 0.0002 -encoder 'graph' -decoder 'graph' -enc_transform ''
 
 
@@ -228,6 +231,7 @@ def train_epoch(model, discriminator,train_data, crit, optimizer,adv_optimizer,e
 
 
 def test_epoch(model, test_data,opt,data_dict, description):
+	# stop()
 	model.eval()
 
 	out_len = (opt.tgt_vocab_size)
@@ -392,7 +396,7 @@ def run_model(model,discriminator, train_data, valid_data, test_data, crit, opti
 
 		losses.append([epoch_i+1,train_loss,valid_loss,test_loss])
 		
-		if not 'test' in opt.model_name:
+		if not 'test' in opt.model_name and not opt.test_only:
 			utils.save_model(opt,epoch_i,model,valid_accu,valid_accus)
 
 
@@ -606,10 +610,9 @@ def main(opt):
 		if opt.gpu_id != -1:
 			torch.cuda.set_device(opt.gpu_id)
 
-	if opt.load_pretrained:
-		stop()
-		# transformer.load_state_dict(opt.model_name+'/model.chkpt')
-		transformer = torch.load(opt.model_name+'/model.chkpt')
+	if opt.load_pretrained:		
+		checkpoint = torch.load(opt.model_name+'/model.chkpt')
+		transformer.load_state_dict(checkpoint['model'])
 
 	try:
 		run_model(transformer,discriminator,train_data,valid_data,test_data,crit,optimizer, adv_optimizer,scheduler,opt,data['dict'])
