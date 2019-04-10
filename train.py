@@ -56,7 +56,7 @@ def train_epoch(model, discriminator,train_data, crit, optimizer,adv_optimizer,e
 			############ Generator ##############
 			optimizer.zero_grad()
 
-			# stop()
+
 			pred,enc_output,*results = model(src,adj,None,gold_binary,return_attns=opt.attns_loss,int_preds=opt.int_preds)
 			norm_pred = F.sigmoid(pred)
 
@@ -122,13 +122,10 @@ def train_epoch(model, discriminator,train_data, crit, optimizer,adv_optimizer,e
 
 						ranking_loss = 0
 						for pos_idx in pos_elements:
-							# stop() 
 							pos_pred = norm_pred[idx][pos_idx.item()].view(-1).repeat(len(neg_pred))
-							# stop()
 							exp_loss = torch.exp(-(neg_pred-pos_pred))
 							ranking_loss += exp_loss.sum()
 
-						# stop()
 						loss -= normalizer[idx]*ranking_loss
 
 				else:
@@ -142,7 +139,6 @@ def train_epoch(model, discriminator,train_data, crit, optimizer,adv_optimizer,e
 					
 
 				if opt.matching_mlp:
-					# stop()
 					matching_loss = F.mse_loss(results[0][0][0],results[0][1][0],reduction='mean')
 					loss += 0.2*matching_loss
 					matching_loss = F.mse_loss(results[0][0][1],results[0][1][1],reduction='mean')
@@ -331,6 +327,18 @@ def run_model(model,discriminator, train_data, valid_data, test_data, crit, opti
 
 	losses = []
 
+	if opt.test_only:
+		start = time.time()
+		all_predictions, all_targets, test_loss = test_epoch(model, test_data,opt,data_dict,'(Testing)')
+		elapsed = ((time.time()-start)/60)
+		print('\n(Testing) elapse: {elapse:3.3f} min'.format(elapse=elapsed))
+		test_loss = test_loss/len(test_data._src_insts)
+		print('B : '+str(test_loss))
+
+		test_metrics = evals.compute_metrics(all_predictions,all_targets,0,opt,elapsed,all_metrics=True)
+
+		return
+
 	loss_file = open(path.join(opt.model_name,'losses.csv'),'w+')
 	for epoch_i in range(opt.epoch):
 		print('================= Epoch', epoch_i+1, '=================')
@@ -452,7 +460,6 @@ def get_small_tfs(data,indices,rev_dict_src,rev_dict_tgt):
 def main(opt):
 	#========= Loading Dataset =========#
 	data = torch.load(opt.data)
-	# stop()
 	vocab_size = len(data['dict']['tgt'])
 	
 	global_labels = None
@@ -562,8 +569,10 @@ def main(opt):
 		matching_mlp=opt.matching_mlp,
 		graph_conv=opt.graph_conv,
 		int_preds=opt.int_preds)
+
 	print(transformer)
 	print(opt.model_name)
+
 
 	opt.total_num_parameters = int(utils.count_parameters(transformer))
 
@@ -596,6 +605,11 @@ def main(opt):
 		crit = crit.cuda()
 		if opt.gpu_id != -1:
 			torch.cuda.set_device(opt.gpu_id)
+
+	if opt.load_pretrained:
+		stop()
+		# transformer.load_state_dict(opt.model_name+'/model.chkpt')
+		transformer = torch.load(opt.model_name+'/model.chkpt')
 
 	try:
 		run_model(transformer,discriminator,train_data,valid_data,test_data,crit,optimizer, adv_optimizer,scheduler,opt,data['dict'])
