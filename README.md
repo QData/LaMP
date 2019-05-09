@@ -1,4 +1,6 @@
-
+**"Neural Message Passing for Multi-Label Classification"**<br/>
+Jack Lanchantin, Arshdeep Sekhon, Yanjun Qi<br/>
+https://arxiv.org/abs/1904.08049
 
 
 # Requirement
