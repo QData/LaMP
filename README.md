@@ -1,6 +1,9 @@
 **"Neural Message Passing for Multi-Label Classification"**<br/>
+ECML-PKDD 2019<br/>
 Jack Lanchantin, Arshdeep Sekhon, Yanjun Qi<br/>
-https://arxiv.org/abs/1904.08049
+[[paper]](https://arxiv.org/abs/1904.08049)
+[[slides (pdf)]](https://www.cs.virginia.edu/~jjl5sw/documents/LaMP_slides.pdf)
+
 
 
 # Requirement
