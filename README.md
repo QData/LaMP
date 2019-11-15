@@ -7,7 +7,11 @@ Jack Lanchantin, Arshdeep Sekhon, Yanjun Qi<br/>
 [[slides]](https://www.cs.virginia.edu/~jjl5sw/documents/LaMP_slides.pdf)
 [[poster]](https://www.cs.virginia.edu/~jjl5sw/documents/LaMP_poster.pdf)
 
-
+## Overview
+In this paper, we propose Label Message Passing (LaMP) Networks to model the joint
+prediction of multiple labels by treating labels as nodes on a graph. 
+We use message passing neural networks (a generalization of graph neural networks) to implicitly model
+the dependencies between labels conditioned on an input. 
 
 ## Requirement
 - python 3.4+
