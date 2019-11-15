@@ -4,7 +4,7 @@ Jack Lanchantin, Arshdeep Sekhon, Yanjun Qi<br/>
 [[paper]](https://arxiv.org/abs/1904.08049)
 [[slides]](https://www.cs.virginia.edu/~jjl5sw/documents/LaMP_slides.pdf)
 
-![GitHub Logo](LaMP.jpg)
+![GitHub Logo](LaMP.png)
 
 # Requirement
 - python 3.4+
