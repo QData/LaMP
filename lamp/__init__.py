@@ -6,7 +6,6 @@ import lamp.Translator
 import lamp.Beam
 import lamp.Encoders
 import lamp.Decoders
-import lamp.DataLoader
 
 __all__ = [
     lamp.Constants,
@@ -17,6 +16,5 @@ __all__ = [
     lamp.Beam,
     lamp.Encoders,
     lamp.Decoders,
-    lamp.DataLoader,
     ]
  
