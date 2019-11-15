@@ -9,14 +9,14 @@ Jack Lanchantin, Arshdeep Sekhon, Yanjun Qi<br/>
 
 
 
-# Requirement
+## Requirement
 - python 3.4+
 - pytorch 0.2.0
 - tqdm
 - numpy
 
 
-# Usage
+## Usage
 
 ### Data
 Download the data from: [http://www.cs.virginia.edu/~jjl5sw/data/lamp_datasets.tar.gz](http://www.cs.virginia.edu/~jjl5sw/data/lamp_datasets.tar.gz) (745M)
@@ -42,5 +42,5 @@ python main.py -dataset reuters -batch_size 32 -d_model 512 -d_inner_hid 512 -n_
 ```
 
 
-# Acknowledgement
+## Acknowledgement
 Much of this code was adapted from @jadore801120
