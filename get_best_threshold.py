@@ -178,11 +178,11 @@ METRICS = ['ebF1','miF1','maF1','ACC','HA']
 def get_count():
 	csv_file = open(path.join('csv_results_files',opt.dataset+'.csv'),'w+')
 	csv_file.write('model,count\n')
-	for variation,models in variations.items():
+	for variation,lamp in variations.items():
 		if not ((opt.dataset in ['reuters','bibtext','sider']) and ('10_10' in variation)) and not ((opt.dataset in ['bookmarks','delicious','rcv1','gm12878']) and ('20_20' in variation)):
 				print('Variation: '+str(variation))
 				csv_file.write(variation+'\n')
-				for model in models:
+				for model in lamp:
 					if (opt.dataset != 'rcv1' and 'matrixlambda' in model) or ((opt.dataset in ['reuters','bibtext']) and ('drop_10_10' in model)):
 						pass
 					else:
@@ -237,7 +237,7 @@ def precision_at_k(predictions,targets):
 
 
 def get_results():
-	for variation,models in variations.items():
+	for variation,lamp in variations.items():
 		if not ((opt.dataset in ['reuters','bibtext','sider']) and ('10_10' in variation)) and not ((opt.dataset in ['bookmarks','delicious','rcv1','gm12878']) and ('20_20' in variation)):
 				print('====================================================================================')
 				print('Variation: '+str(variation))
@@ -248,7 +248,7 @@ def get_results():
 					csv_file.write(','+metric)
 				csv_file.write(',AVG,avgAUC,medAUC,avgAUPR,P@1,P@3,P@5\n')
 
-				for model in models:
+				for model in lamp:
 					loaded=False
 
 					if (opt.dataset != 'rcv1' and 'matrixlambda' in model):

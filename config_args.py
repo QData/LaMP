@@ -83,7 +83,6 @@ def config_args(opt):
 	
 
 	# if 'reuters' in opt.dataset or 'bibtext' in opt.dataset:
-	opt.results_dir = '/bigtemp/jjl5sw/deepENCODE/results/'
 
 	if opt.n_layers_dec is None:
 		opt.n_layers_dec = opt.n_layers_enc
@@ -173,10 +172,6 @@ def config_args(opt):
 
 	opt.model_name += '.drop_'+("%.2f" % opt.dropout).split('.')[1]+'_'+("%.2f" % opt.dec_dropout).split('.')[1]
 
-	# if opt.dec_dropout2 == -1:
-	# 	opt.dec_dropout2 = False
-	# else:
-	# 	opt.model_name += '_'+("%.2f" % opt.dec_dropout2).split('.')[1]
 
 	if opt.label_smoothing > 0 and opt.decoder in ['sa_m','rnn_m']:
 		opt.model_name += '.ls_'+("%.2f" % opt.label_smoothing).split('.')[1]

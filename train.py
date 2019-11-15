@@ -1,12 +1,11 @@
 import argparse,math,time,warnings,copy, numpy as np, os.path as path 
 import evals,utils
 import torch, torch.nn as nn, torch.nn.functional as F
-import models.Constants as Constants
-from models.Models import Transformer
-from models.Discriminators import Discriminator
-from models.Optim import ScheduledOptim
+import lamp.Constants as Constants
+from lamp.Models import LAMP
+from lamp.Optim import ScheduledOptim
 from utils import LabelSmoothing
-from models.Translator import translate
+from lamp.Translator import translate
 from data_loader import process_data
 from config_args import config_args,get_args
 from pdb import set_trace as stop
@@ -27,7 +26,7 @@ opt = config_args(args)
 
 
 
-def train_epoch(model, discriminator,train_data, crit, optimizer,adv_optimizer,epoch,data_dict,opt):
+def train_epoch(model,train_data, crit, optimizer,adv_optimizer,epoch,data_dict,opt):
 	model.train()
 
 	out_len = (opt.tgt_vocab_size) if opt.binary_relevance else (opt.tgt_vocab_size-1)
@@ -82,120 +81,65 @@ def train_epoch(model, discriminator,train_data, crit, optimizer,adv_optimizer,e
 				loss += 0.2*(attn_loss0)
 				loss += 0.2*(attn_loss1)
 
-			if opt.loss == 'adv' and epoch > opt.thresh1: 
-				if opt.adv_type == 'infnet':
-					delta = F.pairwise_distance(norm_pred,gold_binary)
-					g_fake_out = discriminator(src,adj,norm_pred)
-					g_real_out = discriminator(src,adj,gold_binary)
-					g_loss = torch.mean(F.relu(-delta+g_fake_out-g_real_out))
-				else:
-					g_fake_out = discriminator(src,adj,norm_pred)
-					g_loss = F.binary_cross_entropy_with_logits(g_fake_out, torch.ones(g_fake_out.size()).cuda(),reduction='mean')
+			if opt.loss == 'ranking':
+				# loss += F.binary_cross_entropy_with_logits(pred, gold_binary,reduction='mean')
+				# margin_loss = torch.nn.MultiLabelMarginLoss(size_average=None, reduce=None, reduction='mean')
 
-				loss += g_loss
-				g_total += g_loss.item()
+				# gold_binary_sorted,sorted_indices = torch.sort(gold_binary, dim=1, descending=True, out=None)
+				# norm_pred_sorted = torch.index_select(norm_pred.view(-1), 0, sorted_indices.view(-1)).view(norm_pred.shape)
 
-				reg_losses = [F.mse_loss(params2,params1,reduction='sum') for params1, params2 in zip(opt.init_model.parameters(),model.parameters())]
-				reg_loss = sum(reg_losses)
-				loss += reg_loss
+				# loss += margin_loss(norm_pred_sorted,gold_binary_sorted.long())
 
-				if opt.bce_with_adv:
-					bce_loss =  F.binary_cross_entropy_with_logits(pred, gold_binary,reduction='mean')
-					bce_total += bce_loss.item()
-					loss += bce_loss
-								
+				pos_size = gold_binary.sum(1)
+				neg_size = gold_binary.size(1) - gold_binary.sum(1)
+				normalizer = 1/(pos_size*neg_size)
+
+				for idx in range(norm_pred.size(0)):
+					pos_elements = gold_binary[idx].nonzero().detach()
+					neg_elements = (gold_binary[idx] == 0).nonzero().detach().view(-1)
+					neg_pred = torch.index_select(norm_pred[idx], 0, neg_elements)
+
+					ranking_loss = 0
+					for pos_idx in pos_elements:
+						pos_pred = norm_pred[idx][pos_idx.item()].view(-1).repeat(len(neg_pred))
+						exp_loss = torch.exp(-(neg_pred-pos_pred))
+						ranking_loss += exp_loss.sum()
+
+					loss -= normalizer[idx]*ranking_loss
+
 			else:
-				if opt.loss == 'ranking':
-					# loss += F.binary_cross_entropy_with_logits(pred, gold_binary,reduction='mean')
-					# margin_loss = torch.nn.MultiLabelMarginLoss(size_average=None, reduce=None, reduction='mean')
-
-					# gold_binary_sorted,sorted_indices = torch.sort(gold_binary, dim=1, descending=True, out=None)
-					# norm_pred_sorted = torch.index_select(norm_pred.view(-1), 0, sorted_indices.view(-1)).view(norm_pred.shape)
-
-					# loss += margin_loss(norm_pred_sorted,gold_binary_sorted.long())
-
-					pos_size = gold_binary.sum(1)
-					neg_size = gold_binary.size(1) - gold_binary.sum(1)
-					normalizer = 1/(pos_size*neg_size)
-
-					for idx in range(norm_pred.size(0)):
-						pos_elements = gold_binary[idx].nonzero().detach()
-						neg_elements = (gold_binary[idx] == 0).nonzero().detach().view(-1)
-						neg_pred = torch.index_select(norm_pred[idx], 0, neg_elements)
-
-						ranking_loss = 0
-						for pos_idx in pos_elements:
-							pos_pred = norm_pred[idx][pos_idx.item()].view(-1).repeat(len(neg_pred))
-							exp_loss = torch.exp(-(neg_pred-pos_pred))
-							ranking_loss += exp_loss.sum()
-
-						loss -= normalizer[idx]*ranking_loss
-
-				else:
-					bce_loss =  F.binary_cross_entropy_with_logits(pred, gold_binary,reduction='mean')
-					loss += bce_loss
-					bce_total += bce_loss.item()
-					if opt.int_preds and not opt.matching_mlp:
-						for i in range(len(results[0])):
-							bce_loss =  F.binary_cross_entropy_with_logits(results[0][i], gold_binary,reduction='mean')
-							loss += (opt.int_pred_weight)*bce_loss
-					
-
-				if opt.matching_mlp:
-					matching_loss = F.mse_loss(results[0][0][0],results[0][1][0],reduction='mean')
-					loss += 0.2*matching_loss
-					matching_loss = F.mse_loss(results[0][0][1],results[0][1][1],reduction='mean')
-					loss += 0.2*matching_loss
-					# matching_loss = F.mse_loss(results[0][0],results[0][1],reduction='mean')
-					# loss += matching_loss
-
-				if opt.loss2 == 'l2':
-					l2_loss = torch.mean(F.pairwise_distance(pred, gold_binary))
-					loss += l2_loss
-				elif opt.loss2 == 'kl':
-					kl_loss = torch.mean(F.kl_div(torch.log(F.sigmoid(pred)), gold_binary))
-					loss += kl_loss
+				bce_loss =  F.binary_cross_entropy_with_logits(pred, gold_binary,reduction='mean')
+				loss += bce_loss
+				bce_total += bce_loss.item()
+				if opt.int_preds and not opt.matching_mlp:
+					for i in range(len(results[0])):
+						bce_loss =  F.binary_cross_entropy_with_logits(results[0][i], gold_binary,reduction='mean')
+						loss += (opt.int_pred_weight)*bce_loss
 				
-				if epoch == opt.thresh1:
-					opt.init_model = copy.deepcopy(model)
+
+			if opt.matching_mlp:
+				matching_loss = F.mse_loss(results[0][0][0],results[0][1][0],reduction='mean')
+				loss += 0.2*matching_loss
+				matching_loss = F.mse_loss(results[0][0][1],results[0][1][1],reduction='mean')
+				loss += 0.2*matching_loss
+				# matching_loss = F.mse_loss(results[0][0],results[0][1],reduction='mean')
+				# loss += matching_loss
+
+			if opt.loss2 == 'l2':
+				l2_loss = torch.mean(F.pairwise_distance(pred, gold_binary))
+				loss += l2_loss
+			elif opt.loss2 == 'kl':
+				kl_loss = torch.mean(F.kl_div(torch.log(F.sigmoid(pred)), gold_binary))
+				loss += kl_loss
+			
+			if epoch == opt.thresh1:
+				opt.init_model = copy.deepcopy(model)
 
 			loss.backward()
 			optimizer.step()
 
 			tgt_out = gold_binary.data
 			pred_out = norm_pred.data
-
-			########## Discriminator ############
-			if opt.loss == 'adv' and epoch > opt.thresh1:
-				adv_optimizer.zero_grad()
-
-				norm_pred = norm_pred.detach()
-				pred = pred.detach()
-
-				if opt.adv_type == 'infnet':
-					delta = F.pairwise_distance(norm_pred,gold_binary)
-					d_fake_out = discriminator(src,adj,norm_pred)
-					d_real_out = discriminator(src,adj,gold_binary)				
-					d_loss = torch.mean(F.relu(delta-d_fake_out+d_real_out))
-					d_total += d_loss.item()
-					
-					# alpha = torch.rand(gold_binary.size()).cuda()
-					# x_hat = (alpha * gold_binary.data) + ((1 - alpha) * norm_pred.requires_grad_(True))
-					# alpha_out = discriminator(src,adj,x_hat)
-					# d_loss_gp = utils.gradient_penalty(alpha_out, x_hat)
-					# d_loss += 1*d_loss_gp
-
-				else:
-					d_real_out = discriminator(src,adj,gold_binary)
-					d_fake_out = discriminator(src,adj,norm_pred)
-					d_real_loss= 0.5*F.binary_cross_entropy_with_logits(d_real_out, torch.ones(d_real_out.size()).cuda())
-					d_fake_loss =  0.5*F.binary_cross_entropy_with_logits(d_fake_out, torch.zeros(d_fake_out.size()).cuda())
-					d_loss += d_real_loss + d_fake_loss
-					d_total += (d_real_loss.item()+d_fake_loss.item())
-				
-				d_loss.backward()
-				adv_optimizer.step()
-
 
 
 		else: 
@@ -324,7 +268,7 @@ def test_epoch(model, test_data,opt,data_dict, description):
 	return all_predictions, all_targets, bce_total
 
 
-def run_model(model,discriminator, train_data, valid_data, test_data, crit, optimizer,adv_optimizer,scheduler, opt, data_dict):
+def run_model(model, train_data, valid_data, test_data, crit, optimizer,adv_optimizer,scheduler, opt, data_dict):
 	logger = Logger(opt)
 	
 	valid_accus = []
@@ -352,7 +296,7 @@ def run_model(model,discriminator, train_data, valid_data, test_data, crit, opti
 
 		################################## TRAIN ###################################
 		start = time.time()
-		all_predictions,all_targets,train_loss=train_epoch(model,discriminator,train_data,crit,optimizer,adv_optimizer,(epoch_i+1),data_dict,opt)
+		all_predictions,all_targets,train_loss=train_epoch(model,train_data,crit,optimizer,adv_optimizer,(epoch_i+1),data_dict,opt)
 		elapsed = ((time.time()-start)/60)
 		print('\n(Training) elapse: {elapse:3.3f} min'.format(elapse=elapsed))
 		train_loss = train_loss/len(train_data._src_insts)
@@ -507,41 +451,8 @@ def main(opt):
 	#========= Preparing Model =========#
 	
 	
-	discriminator = None
-	if opt.loss == 'adv':
-		discriminator = Discriminator(
-			opt.src_vocab_size,
-			opt.tgt_vocab_size,
-			opt.max_token_seq_len_e,
-			opt.max_token_seq_len_d,
-			proj_share_weight=opt.proj_share_weight,
-			embs_share_weight=opt.embs_share_weight,
-			d_k=opt.d_k,
-			d_v=opt.d_v,
-			d_model=opt.d_model,
-			d_word_vec=opt.d_word_vec,
-			d_inner_hid=opt.d_inner_hid,
-			n_layers_enc=opt.n_layers_enc,
-			n_layers_dec=opt.n_layers_dec,
-			n_head=opt.n_head,
-			n_head2=opt.n_head2,
-			dropout=opt.dropout,
-			dec_dropout=opt.dec_dropout,
-			dec_dropout2=opt.dec_dropout2,
-			encoder=opt.encoder,
-			decoder=opt.decoder,
-			enc_transform=opt.enc_transform,
-			onehot=opt.onehot,
-			attn_type=opt.attn_type,
-			no_enc_pos_embedding=opt.no_enc_pos_embedding,
-			no_dec_self_att=opt.no_dec_self_att,
-			loss=opt.loss,
-			label_adj_matrix=label_adj_matrix,
-			label_mask=opt.label_mask,
-			int_preds=opt.int_preds)
-		print(discriminator)
 
-	transformer = Transformer(
+	transformer = LAMP(
 		opt.src_vocab_size,
 		opt.tgt_vocab_size,
 		opt.max_token_seq_len_e,
@@ -589,8 +500,6 @@ def main(opt):
 	scheduler = torch.torch.optim.lr_scheduler.StepLR(optimizer, step_size=opt.lr_step_size, gamma=opt.lr_decay,last_epoch=-1)
 
 	adv_optimizer = None
-	if opt.loss == 'adv':
-		adv_optimizer = torch.optim.Adam(discriminator.parameters(),betas=(0.9, 0.98),lr=opt.lr)
 	
 	crit = utils.get_criterion(opt)
 
@@ -599,13 +508,9 @@ def main(opt):
 		transformer = nn.DataParallel(transformer)
 		# if opt.matching_mlp: 
 		#	 transformer.matching_network = nn.DataParallel(transformer.matching_network)
-		if discriminator:
-			discriminator = nn.DataParallel(discriminator)
 	if torch.cuda.is_available() and opt.cuda:
 		transformer = transformer.cuda()
-		
-		if discriminator:
-			discriminator = discriminator.cuda()
+	
 		crit = crit.cuda()
 		if opt.gpu_id != -1:
 			torch.cuda.set_device(opt.gpu_id)
@@ -615,7 +520,7 @@ def main(opt):
 		transformer.load_state_dict(checkpoint['model'])
 
 	try:
-		run_model(transformer,discriminator,train_data,valid_data,test_data,crit,optimizer, adv_optimizer,scheduler,opt,data['dict'])
+		run_model(transformer,train_data,valid_data,test_data,crit,optimizer, adv_optimizer,scheduler,opt,data['dict'])
 	except KeyboardInterrupt:
 		print('-' * 89+'\nManual Exit')
 		exit()

@@ -3,7 +3,7 @@ import random
 import numpy as np
 import torch
 import math
-import models.Constants as Constants
+import lamp.Constants as Constants
 from pdb import set_trace as stop
 import utils
 from os import path

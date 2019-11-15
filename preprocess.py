@@ -1,7 +1,7 @@
 ''' Handling the data io '''
 import argparse
 import torch
-import models.Constants as Constants
+import lamp.Constants as Constants
 from pdb import set_trace as stop
 
 
