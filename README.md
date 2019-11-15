@@ -18,7 +18,7 @@ Jack Lanchantin, Arshdeep Sekhon, Yanjun Qi<br/>
 
 ## Usage
 
-### Data
+### Process The Data
 Download the data from: [http://www.cs.virginia.edu/~jjl5sw/data/lamp_datasets.tar.gz](http://www.cs.virginia.edu/~jjl5sw/data/lamp_datasets.tar.gz) (745M)
 ```bash
 wget http://www.cs.virginia.edu/~jjl5sw/data/lamp_datasets.tar.gz
@@ -35,6 +35,8 @@ tar -xvf lamp_datasets.tar.gz -C ./
 python preprocess.py -train_src data/reuters/train_inputs.txt -train_tgt data/reuters/train_labels.txt -valid_src data/reuters/valid_inputs.txt -valid_tgt data/reuters/valid_labels.txt -test_src data/reuters/test_inputs.txt -test_tgt data/reuters/test_labels.txt -save_data data/reuters/train_valid_test.pt -max_seq_len 300
 ```
 -->
+
+Note: the data directory provided includes preprocessed data. To use your own data, see utils/preprocess.py which includes an example how to run in the comments at the top.
 
 ### Train and Test the model (training script contains the validation and testing code)
 ```bash
