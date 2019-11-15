@@ -18,6 +18,7 @@ Jack Lanchantin, Arshdeep Sekhon, Yanjun Qi<br/>
 ### Download the data
 [http://www.cs.virginia.edu/~jjl5sw/data/lamp_datasets.tar.gz](http://www.cs.virginia.edu/~jjl5sw/data/lamp_datasets.tar.gz) (745M)
 
+tar -xvf lamp_datasets.tar.gz
 
 <!--
 ### 1) Preprocess the data for a specific dataset
