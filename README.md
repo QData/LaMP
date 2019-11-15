@@ -15,10 +15,16 @@ Jack Lanchantin, Arshdeep Sekhon, Yanjun Qi<br/>
 
 # Usage
 
-### Download the data
-[http://www.cs.virginia.edu/~jjl5sw/data/lamp_datasets.tar.gz](http://www.cs.virginia.edu/~jjl5sw/data/lamp_datasets.tar.gz) (745M)
+### Data
+Download the data from: [http://www.cs.virginia.edu/~jjl5sw/data/lamp_datasets.tar.gz](http://www.cs.virginia.edu/~jjl5sw/data/lamp_datasets.tar.gz) (745M)
+```bash
+wget http://www.cs.virginia.edu/~jjl5sw/data/lamp_datasets.tar.gz
+```
 
-tar -xvf lamp_datasets.tar.gz
+Untar into the current directory
+```bash
+tar -xvf lamp_datasets.tar.gz -C ./
+```
 
 <!--
 ### 1) Preprocess the data for a specific dataset
