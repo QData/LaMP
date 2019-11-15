@@ -52,53 +52,14 @@ def train_epoch(model,train_data, crit, optimizer,adv_optimizer,epoch,data_dict,
 			pred,enc_output,*results = model(src,adj,None,gold_binary,return_attns=opt.attns_loss,int_preds=opt.int_preds)
 			norm_pred = F.sigmoid(pred)
 
-			if opt.attns_loss:
-				dec_self_attns = results[1][0]
-				
-				attns0 = dec_self_attns[0].view(tgt.size(0),-1,dec_self_attns[0].size(-2),dec_self_attns[0].size(-1))
-				attns1 = dec_self_attns[1].view(tgt.size(0),-1,dec_self_attns[1].size(-2),dec_self_attns[1].size(-1))
-				# attns2 = dec_self_attns[2].view(tgt.size(0),-1,dec_self_attns[2].size(-2),dec_self_attns[2].size(-1))
 
-				mask = torch.ones_like(attns0[0][0]) - torch.diag(torch.ones_like(attns0[0][0][0])).repeat(tgt.size(0),1,1)
-
-				attns_true = gold_binary.repeat(gold_binary.size(1),1).view(tgt.size(0),opt.tgt_vocab_size,opt.tgt_vocab_size)*mask
-				attns_true = attns_true.unsqueeze(1).repeat(1,attns0.size(1),1,1)*gold_binary.sum(1).view(-1,1,1,1)
-
-				attn_loss0 = torch.nn.functional.mse_loss(attns0,attns_true,reduction='mean')
-				attn_loss1 = torch.nn.functional.mse_loss(attns1,attns_true,reduction='mean')
-				# attn_loss2 = torch.nn.functional.mse_loss(attns2,attns_true,reduction='mean')
-
-				loss += 0.2*(attn_loss0)
-				loss += 0.2*(attn_loss1)
-
-			if opt.loss == 'ranking':
-
-
-				pos_size = gold_binary.sum(1)
-				neg_size = gold_binary.size(1) - gold_binary.sum(1)
-				normalizer = 1/(pos_size*neg_size)
-
-				for idx in range(norm_pred.size(0)):
-					pos_elements = gold_binary[idx].nonzero().detach()
-					neg_elements = (gold_binary[idx] == 0).nonzero().detach().view(-1)
-					neg_pred = torch.index_select(norm_pred[idx], 0, neg_elements)
-
-					ranking_loss = 0
-					for pos_idx in pos_elements:
-						pos_pred = norm_pred[idx][pos_idx.item()].view(-1).repeat(len(neg_pred))
-						exp_loss = torch.exp(-(neg_pred-pos_pred))
-						ranking_loss += exp_loss.sum()
-
-					loss -= normalizer[idx]*ranking_loss
-
-			else:
-				bce_loss =  F.binary_cross_entropy_with_logits(pred, gold_binary,reduction='mean')
-				loss += bce_loss
-				bce_total += bce_loss.item()
-				if opt.int_preds and not opt.matching_mlp:
-					for i in range(len(results[0])):
-						bce_loss =  F.binary_cross_entropy_with_logits(results[0][i], gold_binary,reduction='mean')
-						loss += (opt.int_pred_weight)*bce_loss
+			bce_loss =  F.binary_cross_entropy_with_logits(pred, gold_binary,reduction='mean')
+			loss += bce_loss
+			bce_total += bce_loss.item()
+			if opt.int_preds and not opt.matching_mlp:
+				for i in range(len(results[0])):
+					bce_loss =  F.binary_cross_entropy_with_logits(results[0][i], gold_binary,reduction='mean')
+					loss += (opt.int_pred_weight)*bce_loss
 				
 			
 			if epoch == opt.thresh1:
