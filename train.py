@@ -3,7 +3,6 @@ import evals,utils
 import torch, torch.nn as nn, torch.nn.functional as F
 import lamp.Constants as Constants
 from lamp.Models import LAMP
-from lamp.Optim import ScheduledOptim
 from utils import LabelSmoothing
 from lamp.Translator import translate
 from data_loader import process_data
@@ -16,13 +15,6 @@ warnings.filterwarnings("ignore")
 parser = argparse.ArgumentParser()
 args = get_args(parser)
 opt = config_args(args)
-
-# forward_tree = torch.load('/af11/jjl5sw/deepENCODE/data/gene/forward_tree.pt')
-
-
-# CUDA_VISIBLE_DEVICES=1 python train.py -dataset sider -save_mode best -batch_size 32 -d_model 512 -d_inner_hid 512 -n_layers_enc 2 -n_layers_dec 2 -n_head 4 -epoch 50 -dropout 0.2 -dec_dropout 0.2 -lr 0.0002 -encoder 'graph' -decoder 'graph' -load_pretrained -test_only
-
-#CUDA_VISIBLE_DEVICES=1 python train.py -dataset bibtext -save_mode best -batch_size 32 -d_model 512 -d_inner_hid 512 -n_layers_enc 3 -n_layers_dec 3 -n_head 4 -epoch 50 -dropout 0.2 -dec_dropout 0.2 -lr 0.0002 -encoder 'graph' -decoder 'graph' -enc_transform ''
 
 
 
@@ -55,9 +47,7 @@ def train_epoch(model,train_data, crit, optimizer,adv_optimizer,epoch,data_dict,
 		if opt.binary_relevance:
 			gold_binary = utils.get_gold_binary(gold.data.cpu(),opt.tgt_vocab_size).cuda()
 
-			############ Generator ##############
 			optimizer.zero_grad()
-
 
 			pred,enc_output,*results = model(src,adj,None,gold_binary,return_attns=opt.attns_loss,int_preds=opt.int_preds)
 			norm_pred = F.sigmoid(pred)
@@ -82,13 +72,7 @@ def train_epoch(model,train_data, crit, optimizer,adv_optimizer,epoch,data_dict,
 				loss += 0.2*(attn_loss1)
 
 			if opt.loss == 'ranking':
-				# loss += F.binary_cross_entropy_with_logits(pred, gold_binary,reduction='mean')
-				# margin_loss = torch.nn.MultiLabelMarginLoss(size_average=None, reduce=None, reduction='mean')
 
-				# gold_binary_sorted,sorted_indices = torch.sort(gold_binary, dim=1, descending=True, out=None)
-				# norm_pred_sorted = torch.index_select(norm_pred.view(-1), 0, sorted_indices.view(-1)).view(norm_pred.shape)
-
-				# loss += margin_loss(norm_pred_sorted,gold_binary_sorted.long())
 
 				pos_size = gold_binary.sum(1)
 				neg_size = gold_binary.size(1) - gold_binary.sum(1)
@@ -116,21 +100,6 @@ def train_epoch(model,train_data, crit, optimizer,adv_optimizer,epoch,data_dict,
 						bce_loss =  F.binary_cross_entropy_with_logits(results[0][i], gold_binary,reduction='mean')
 						loss += (opt.int_pred_weight)*bce_loss
 				
-
-			if opt.matching_mlp:
-				matching_loss = F.mse_loss(results[0][0][0],results[0][1][0],reduction='mean')
-				loss += 0.2*matching_loss
-				matching_loss = F.mse_loss(results[0][0][1],results[0][1][1],reduction='mean')
-				loss += 0.2*matching_loss
-				# matching_loss = F.mse_loss(results[0][0],results[0][1],reduction='mean')
-				# loss += matching_loss
-
-			if opt.loss2 == 'l2':
-				l2_loss = torch.mean(F.pairwise_distance(pred, gold_binary))
-				loss += l2_loss
-			elif opt.loss2 == 'kl':
-				kl_loss = torch.mean(F.kl_div(torch.log(F.sigmoid(pred)), gold_binary))
-				loss += kl_loss
 			
 			if epoch == opt.thresh1:
 				opt.init_model = copy.deepcopy(model)
@@ -165,12 +134,7 @@ def train_epoch(model,train_data, crit, optimizer,adv_optimizer,epoch,data_dict,
 		all_targets[start_idx:end_idx] = tgt_out
 		batch_idx +=1
 		
-
-	# print('B : '+str(bce_total))
-	if opt.loss == 'adv': print('D : '+str(d_total)+'\nG : '+str(g_total))
 	
-	
-
 	return all_predictions, all_targets, bce_total
 
 
@@ -253,17 +217,7 @@ def test_epoch(model, test_data,opt,data_dict, description):
 			
 		batch_idx+=1
 	
-	# if 'gene' in opt.dataset:
-	#	 for parent in forward_tree:
-	#		 parent_idx = data_dict['tgt'][parent]-4
-	#		 for child in forward_tree[parent]:
-	#			 child_idx = data_dict['tgt'][child]-4
-	#			 all_targets[:,child_idx][all_targets[:,child_idx]<1] = float('NaN')
-	#			 all_predictions[:,child_idx][all_predictions[:,child_idx]<1] = float('NaN')
-		
-	#	 all_predictions = torch.index_select(all_predictions, 1, idx_tensor)
-	#	 all_targets = torch.index_select(all_targets, 1, idx_tensor)
-	#	 print('**')
+
 	
 	return all_predictions, all_targets, bce_total
 
@@ -292,7 +246,6 @@ def run_model(model, train_data, valid_data, test_data, crit, optimizer,adv_opti
 		print('================= Epoch', epoch_i+1, '=================')
 		if scheduler and opt.lr_decay > 0: scheduler.step()
 
-		# for param in model.decoder.layer_stack[0].parameters(): param.requires_grad = False
 
 		################################## TRAIN ###################################
 		start = time.time()
@@ -350,59 +303,8 @@ def run_model(model, train_data, valid_data, test_data, crit, optimizer,adv_opti
 		loss_file.write(','+str(valid_loss))
 		loss_file.write(','+str(test_loss))
 		loss_file.write('\n')
-	# losses = np.asarray(losses).astype(float)
-	# print(path.join(opt.model_name,'losses.csv'))
-	# np.savetxt(path.join(opt.model_name,'losses.csv'), losses, delimiter=",")
 
 
-def get_small_tfs(data,indices,rev_dict_src,rev_dict_tgt):
-	src_file = open('small_tf_inputs.txt','w')
-	tgt_file = open('small_tf_labels.txt','w')
-
-	for i in range(len(data['train']['src'])):
-		src = data['train']['src'][i][1:-1]
-		labels = data['train']['tgt'][i][1:-1]
-
-		Flag = False
-		for label in labels:
-			if label in indices:
-				Flag = True
-				tgt_file.write(rev_dict_tgt[label]+' ')
-		if Flag is True:
-			tgt_file.write('\n')
-			for feature in src:
-				src_file.write(rev_dict_src[feature]+' ')
-			src_file.write('\n')
-
-	for i in range(len(data['valid']['src'])):
-		src = data['valid']['src'][i][1:-1]
-		labels = data['valid']['tgt'][i][1:-1]
-		Flag = False
-		for label in labels:
-			if label in indices:
-				Flag = True
-				tgt_file.write(rev_dict_tgt[label]+' ')
-		if Flag is True:
-			tgt_file.write('\n')
-			for feature in src:
-				src_file.write(rev_dict_src[feature]+' ')
-			src_file.write('\n')
-		
-	for i in range(len(data['test']['src'])):
-		src = data['test']['src'][i][1:-1]
-		labels = data['test']['tgt'][i][1:-1]
-		Flag = False
-		for label in labels:
-			if label in indices:
-				Flag = True
-				tgt_file.write(rev_dict_tgt[label]+' ')
-		if Flag is True:
-			tgt_file.write('\n')
-			for feature in src:
-				src_file.write(rev_dict_src[feature]+' ')
-			src_file.write('\n')
-
-	return None
 
 
 def main(opt):
@@ -436,23 +338,12 @@ def main(opt):
 	indices = ranked_idx[2:24].long()
 	label_count = ranked_labels[2:24]
 
-	# for i in range(len(indices)): print(rev_dict_tgt[indices[i].item()].upper()+','+str(int(label_count[i].item())))
-	
-	# rev_dict_src = {v: k for k, v in data['dict']['src'].items()}
-	# rev_dict_tgt = {v: k for k, v in data['dict']['tgt'].items()}
-
-	# get_small_tfs(data,indices,rev_dict_src,rev_dict_tgt)
-
-	# ranked_labels2 = torch.index_select(global_labels, 0, indices)
 
 	train_data,valid_data,test_data,label_adj_matrix,opt = process_data(data,opt)
 	print(opt)
 
 	#========= Preparing Model =========#
-	
-	
-
-	transformer = LAMP(
+	model = LAMP(
 		opt.src_vocab_size,
 		opt.tgt_vocab_size,
 		opt.max_token_seq_len_e,
@@ -485,18 +376,16 @@ def main(opt):
 		graph_conv=opt.graph_conv,
 		int_preds=opt.int_preds)
 
-	print(transformer)
+	print(model)
 	print(opt.model_name)
 
 
-	opt.total_num_parameters = int(utils.count_parameters(transformer))
-
-	# pretrained_embeddings = pickle.load(open("Data/word_embedding_dict.pt","rb"), encoding='iso-8859-1' )
+	opt.total_num_parameters = int(utils.count_parameters(model))
 
 	if opt.load_emb:
-		transformer = utils.load_embeddings(transformer,'../../Data/word_embedding_dict.pth')
+		model = utils.load_embeddings(model,'../../Data/word_embedding_dict.pth')
  
-	optimizer = torch.optim.Adam(transformer.get_trainable_parameters(),betas=(0.9, 0.98),lr=opt.lr)
+	optimizer = torch.optim.Adam(model.get_trainable_parameters(),betas=(0.9, 0.98),lr=opt.lr)
 	scheduler = torch.torch.optim.lr_scheduler.StepLR(optimizer, step_size=opt.lr_step_size, gamma=opt.lr_decay,last_epoch=-1)
 
 	adv_optimizer = None
@@ -505,11 +394,10 @@ def main(opt):
 
 	if torch.cuda.device_count() > 1 and opt.multi_gpu:
 		print("Using", torch.cuda.device_count(), "GPUs!")
-		transformer = nn.DataParallel(transformer)
-		# if opt.matching_mlp: 
-		#	 transformer.matching_network = nn.DataParallel(transformer.matching_network)
+		model = nn.DataParallel(model)
+
 	if torch.cuda.is_available() and opt.cuda:
-		transformer = transformer.cuda()
+		model = model.cuda()
 	
 		crit = crit.cuda()
 		if opt.gpu_id != -1:
@@ -517,10 +405,10 @@ def main(opt):
 
 	if opt.load_pretrained:		
 		checkpoint = torch.load(opt.model_name+'/model.chkpt')
-		transformer.load_state_dict(checkpoint['model'])
+		model.load_state_dict(checkpoint['model'])
 
 	try:
-		run_model(transformer,train_data,valid_data,test_data,crit,optimizer, adv_optimizer,scheduler,opt,data['dict'])
+		run_model(model,train_data,valid_data,test_data,crit,optimizer, adv_optimizer,scheduler,opt,data['dict'])
 	except KeyboardInterrupt:
 		print('-' * 89+'\nManual Exit')
 		exit()

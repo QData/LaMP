@@ -139,17 +139,11 @@ def summarize_data(data):
         x.index_fill_(0, indices, 1)
         train_label_vals[i] = x
 
-        # for idx1 in indices:
-        #     for idx2 in indices:
-        #         unconditional_probs[idx1,idx2] += 1
 
-    # unconditional_probs = unconditional_probs[4:,4:]
     train_label_vals = train_label_vals[:,4:]
 
     pearson_matrix = np.corrcoef(train_label_vals.transpose(0,1).cpu().numpy())
 
-    
-     
     valid_label_vals = torch.zeros(len(data['valid']['tgt']),len(data['dict']['tgt']))
     for i in range(len(data['valid']['tgt'])):
         indices = torch.from_numpy(np.array(data['valid']['tgt'][i]))

@@ -1,10 +1,46 @@
 import torch, torch.nn as nn, torch.nn.functional as F
 import torch.nn.init as init
-# from lamp.Modules import BottleLinear as Linear
-from lamp.Modules import XavierLinear as Linear
-from lamp.Modules import ScaledDotProductAttention
 from pdb import set_trace as stop
 import numpy as np
+
+
+class XavierLinear(nn.Module):
+    def __init__(self, d_in, d_out, bias=True):
+        super(XavierLinear, self).__init__()
+        self.linear = nn.Linear(d_in, d_out, bias=bias)
+        init.xavier_normal(self.linear.weight)
+    def forward(self, x):
+        return self.linear(x)
+
+
+class ScaledDotProductAttention(nn.Module):
+    def __init__(self, temperature, dropout=0.1, attn_type='softmax'):
+        super().__init__()
+        self.temperature = temperature
+        self.dropout = nn.Dropout(dropout)
+        if attn_type == 'softmax':
+            self.attn_type = nn.Softmax(dim=2)
+            # self.softmax = BottleSoftmax()
+        else:
+            self.attn_type = nn.Sigmoid()
+
+    def forward(self, q, k, v, attn_mask=None,stop_sig=False):
+        attn = torch.bmm(q, k.transpose(1, 2))
+        attn = attn / self.temperature
+
+        if attn_mask is not None:
+            attn = attn.masked_fill(attn_mask, -np.inf)
+
+        if stop_sig:
+            print('**')
+            stop()
+
+
+        attn = self.attn_type(attn)
+        attn = self.dropout(attn)
+        output = torch.bmm(attn, v)
+
+        return output, attn
 
 
 class MultiHeadAttention(nn.Module):
@@ -49,10 +85,6 @@ class MultiHeadAttention(nn.Module):
         residual = q
         
         if hasattr(self,'dropout2'):
-            # ones = torch.ones(q.size(0),q.size(1))
-            # ones = self.dropout2(ones)
-            # ones = ones.unsqueeze(2).repeat(1,1,q.size(2)).cuda()
-            # q = ones*q
             q = self.dropout2(q)
 
         
@@ -82,8 +114,6 @@ class MultiHeadAttention(nn.Module):
         
 
         if dec_self:
-            # stop()
-            # output = output*(F.dropout(torch.ones(output.size(0)).cuda(),0.5)/2).view(-1,1,1).repeat(1,output.size(1),output.size(2))
             output = self.layer_norm(output + residual)
         else:
             output = self.layer_norm(output + residual)
@@ -109,8 +139,6 @@ class PositionwiseFeedForward(nn.Module):
 
         
         output = self.layer_norm(output + residual)
-        # output = (output + residual)
-        # output = self.layer_norm(output)
         return output
 
 
