@@ -5,7 +5,7 @@ import lamp.Constants as Constants
 from lamp.Models import LAMP
 from utils import LabelSmoothing
 from lamp.Translator import translate
-from data_loader import process_data
+from lamp.DataLoader import process_data
 from config_args import config_args,get_args
 from pdb import set_trace as stop
 from tqdm import tqdm
@@ -100,11 +100,8 @@ def train_epoch(model,train_data, crit, optimizer,adv_optimizer,epoch,data_dict,
 
 
 def test_epoch(model, test_data,opt,data_dict, description):
-	# stop()
 	model.eval()
-
 	out_len = (opt.tgt_vocab_size)
-
 	all_predictions = torch.zeros(len(test_data._src_insts),out_len)
 	all_targets = torch.zeros(len(test_data._src_insts),out_len)
 
@@ -123,8 +120,6 @@ def test_epoch(model, test_data,opt,data_dict, description):
 	for batch in tqdm(test_data, mininterval=0.5, desc=description, leave=False):
 		src,adj,tgt = batch
 		batch_loc = int(batch_idx*batch_size)
-
-		
 
 		gold = tgt[:, 1:]
 		
