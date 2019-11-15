@@ -7,29 +7,6 @@ from pdb import set_trace as stop
 
 # python preprocess.py -train_src data/reuters/train_inputs.txt -train_tgt data/reuters/train_labels.txt -valid_src data/reuters/valid_inputs.txt -valid_tgt data/reuters/valid_labels.txt -test_src data/reuters/test_inputs.txt -test_tgt data/reuters/test_labels.txt -save_data data/reuters/train_valid_test.pt -max_seq_len 300
 
-# python preprocess.py -train_src data/rcv1/train_inputs.txt -train_tgt data/rcv1/train_labels.txt -valid_src data/rcv1/valid_inputs.txt -valid_tgt data/rcv1/valid_labels.txt -test_src data/rcv1/test_inputs.txt -test_tgt data/rcv1/test_labels.txt -save_data data/rcv1/train_valid_test.pt -max_seq_len 300
-
-
-# python preprocess.py -train_src data/gm12878/train_inputs.txt -train_tgt data/gm12878/train_labels.txt -valid_src data/gm12878/valid_inputs.txt -valid_tgt data/gm12878/valid_labels.txt -test_src data/gm12878/test_inputs.txt -test_tgt data/gm12878/test_labels.txt -save_data data/gm12878/train_valid_test.pt -max_seq_len 200
-
-# python preprocess.py -train_src data/tcell/train_inputs.txt -train_tgt data/tcell/train_labels.txt -valid_src data/tcell/valid_inputs.txt -valid_tgt data/tcell/valid_labels.txt -test_src data/tcell/test_inputs.txt -test_tgt data/tcell/test_labels.txt -save_data data/tcell/train_valid_test.pt -max_seq_len 2000
-
-# python preprocess.py -train_src data/tcell/small_train_inputs.txt -train_tgt data/tcell/small_train_labels.txt -valid_src data/tcell/small_valid_inputs.txt -valid_tgt data/tcell/small_valid_labels.txt -test_src data/tcell/small_test_inputs.txt -test_tgt data/tcell/small_test_labels.txt -save_data data/tcell/small_train_valid_test.pt -max_seq_len 500
-
-# python preprocess.py -train_src data/bookmarks/train_inputs.txt -train_tgt data/bookmarks/train_labels.txt -valid_src data/bookmarks/valid_inputs.txt -valid_tgt data/bookmarks/valid_labels.txt -test_src data/bookmarks/test_inputs.txt -test_tgt data/bookmarks/test_labels.txt -save_data data/bookmarks/train_valid_test.pt -max_seq_len 500
-
-# python preprocess.py -train_src data/bibtext/train_inputs.txt -train_tgt data/bibtext/train_labels.txt -valid_src data/bibtext/valid_inputs.txt -valid_tgt data/bibtext/valid_labels.txt -test_src data/bibtext/test_inputs.txt -test_tgt data/bibtext/test_labels.txt -save_data data/bibtext/train_valid_test.pt -max_seq_len 500
-
-# python preprocess.py -train_src data/delicious/train_inputs.txt -train_tgt data/delicious/train_labels.txt -valid_src data/delicious/valid_inputs.txt -valid_tgt data/delicious/valid_labels.txt -test_src data/delicious/test_inputs.txt -test_tgt data/delicious/test_labels.txt -save_data data/delicious/train_valid_test.pt -max_seq_len 500
-
-# python preprocess.py -train_src data/delicious2/train_inputs.txt -train_tgt data/delicious2/train_labels.txt -valid_src data/delicious2/valid_inputs.txt -valid_tgt data/delicious2/valid_labels.txt -test_src data/delicious2/test_inputs.txt -test_tgt data/delicious2/test_labels.txt -save_data data/delicious2/train_valid_test.pt -max_seq_len 500
-
-# python preprocess.py -train_src data/sider/train_inputs.txt -train_adj data/sider/train_matrices.txt -train_tgt data/sider/train_labels.txt -valid_src data/sider/valid_inputs.txt -valid_adj data/sider/valid_matrices.txt -valid_tgt data/sider/valid_labels.txt -test_src data/sider/test_inputs.txt -test_adj data/sider/test_matrices.txt -test_tgt data/sider/test_labels.txt -save_data data/sider/train_valid_test.pt -max_seq_len 915
-
-#python preprocess.py -train_src data/tmc2007/train_inputs.txt -train_tgt data/tmc2007/train_labels.txt -valid_src data/tmc2007/valid_inputs.txt -valid_tgt data/tmc2007/valid_labels.txt -test_src data/tmc2007/test_inputs.txt -test_tgt data/tmc2007/test_labels.txt -save_data data/tmc2007/train_valid_test.pt -max_seq_len 500
-
-# python preprocess.py -train_src data/scene/train_inputs.txt -train_tgt data/scene/train_labels.txt -valid_src data/scene/valid_inputs.txt -valid_tgt data/scene/valid_labels.txt -test_src data/scene/test_inputs.txt -test_tgt data/scene/test_labels.txt -save_data data/scene/train_valid_test.pt -max_seq_len 500
-
 
 def read_adj_matrix(inst_file):
 
