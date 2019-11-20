@@ -123,10 +123,7 @@ class GraphDecoder(nn.Module):
         
         self.layer_stack = nn.ModuleList()
         for _ in range(n_layers):
-            if graph_conv:
-                 self.layer_stack.append(GraphConvolution(d_model, d_inner_hid, n_head, d_k, d_v, dropout=dropout,no_dec_self_att=no_dec_self_att))
-            else:
-                self.layer_stack.append(DecoderLayer(d_model, d_inner_hid, n_head,n_head2, d_k, d_v, dropout=dropout,dropout2=dropout2,no_dec_self_att=no_dec_self_att,attn_type=attn_type))           
+            self.layer_stack.append(DecoderLayer(d_model, d_inner_hid, n_head,n_head2, d_k, d_v, dropout=dropout,dropout2=dropout2,no_dec_self_att=no_dec_self_att,attn_type=attn_type))           
 
 
     def forward(self, tgt, src_seq, enc_output,return_attns=False, int_preds=False):
