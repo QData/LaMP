@@ -49,6 +49,8 @@ python main.py -dataset reuters -batch_size 32 -d_model 512 -d_inner_hid 512 -n_
 
 All datasets allow for the usage of the graph encoder (`-encoder 'graph'`) except for nuswide_vector, which requires the encoder argument to be set to 'mlp' (`-encoder 'mlp'`), since this is a vector input (see Appendix Table 5 of the paper for all data types). 
 
+To use the fully connected label graph, use `-label_mask none`, and to use the edgeless label graph, use `-label_mask inv_eye`.
+
 
 Feel free to open an issue or email jjl5sw@virginia.edu with any questions.
 
