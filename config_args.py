@@ -44,7 +44,7 @@ def get_args(parser):
 	parser.add_argument('-decoder', type=str, choices=['sa_m','rnn_m','sa_b','graph','mlp'], default='sa_m')
 	parser.add_argument('-enc_transform', type=str, choices=['max', 'mean', 'flatten','sum',''], default='')
 	parser.add_argument('-lmbda', type=float, default=1)
-	parser.add_argument('-label_mask', type=str, choices=['none', 'eye', 'inveye', 'prior', 'random'], default='none')
+	parser.add_argument('-label_mask', type=str, choices=['none', 'inveye', 'prior'], default='none')
 	parser.add_argument('-load_emb', action='store_true')
 	parser.add_argument('-attn_type', type=str, choices=['softmax', 'sigmoid'], default='softmax')
 	parser.add_argument('-dual_br', type=float, default=1)
@@ -251,7 +251,7 @@ def config_args(opt):
 	print(opt.model_name)
 
 	if (not opt.viz) and (not opt.overwrite) and (not 'test' in opt.model_name) and (path.exists(opt.model_name)) and (not opt.load_pretrained):
-	    overwrite_status = input('Already Exists. Overwrite?: ')
+	    overwrite_status = input('Already Exists. Overwrite? (y/n): ')
 	    if overwrite_status == 'rm':
 	    	os.system('rm -rf '+opt.model_name)
 	    elif not 'y' in overwrite_status:

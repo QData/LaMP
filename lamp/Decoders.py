@@ -110,14 +110,12 @@ class GraphDecoder(nn.Module):
             for i in range(label_adj_matrix.size(0)):
                 if label_adj_matrix[i].sum().item() < 1:
                     label_adj_matrix[i,i] = 1 #This prevents Nan output in attention (otherwise 0 attn weights occurs)
-            self.label_adj_matrix = utils.swap_0_1(label_adj_matrix,1,0).unsqueeze(0)
+            self.label_mask = utils.swap_0_1(label_adj_matrix,1,0).unsqueeze(0)
         else:
-            if label_mask == 'eye':
-                self.label_adj_matrix = torch.eye(n_tgt_vocab)
-            elif label_mask == 'inveye':
-                self.label_adj_matrix = 1-torch.eye(n_tgt_vocab)
+            if label_mask == 'inveye':
+                self.label_mask = 1-torch.eye(n_tgt_vocab)
             elif label_mask == 'none':
-                self.label_adj_matrix = None
+                self.label_mask = None
             else:
                 NotImplementedError
         
@@ -139,8 +137,8 @@ class GraphDecoder(nn.Module):
         if not self.enc_vec:
             dec_enc_attn_pad_mask = utils.get_attn_padding_mask(tgt_seq, src_seq[:,0:enc_output.size(1)])
 
-        if self.label_adj_matrix is not None:
-            dec_slf_attn_mask = self.label_adj_matrix.repeat(batch_size,1,1).cuda().byte()
+        if self.label_mask is not None:
+            dec_slf_attn_mask = self.label_mask.repeat(batch_size,1,1).cuda().byte()
         else:
             dec_slf_attn_mask = None
             

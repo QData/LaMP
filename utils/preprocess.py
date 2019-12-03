@@ -4,9 +4,9 @@ import torch
 import lamp.Constants as Constants
 from pdb import set_trace as stop
 
-
-# python preprocess.py -train_src ../data/reuters/train_inputs.txt -train_tgt ../data/reuters/train_labels.txt -valid_src ../data/reuters/valid_inputs.txt -valid_tgt ../data/reuters/valid_labels.txt -test_src ../data/reuters/test_inputs.txt -test_tgt ../data/reuters/test_labels.txt -save_data ../data/reuters/train_valid_test.pt -max_seq_len 300
-
+"""
+python preprocess.py -train_src ../data/reuters/train_inputs.txt -train_tgt ../data/reuters/train_labels.txt -valid_src ../data/reuters/valid_inputs.txt -valid_tgt ../data/reuters/valid_labels.txt -test_src ../data/reuters/test_inputs.txt -test_tgt ../data/reuters/test_labels.txt -save_data ../data/reuters/train_valid_test.pt -max_seq_len 300
+"""
 
 def read_adj_matrix(inst_file):
 

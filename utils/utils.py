@@ -204,12 +204,15 @@ def get_gold_binary_full(gold,tgt_vocab_size):
 
 def get_gold_binary(gold,tgt_vocab_size):
     gold_binary = torch.zeros(gold.size(0),tgt_vocab_size+4)
+    
     for i,row in enumerate(gold_binary):
         indices = gold[i]
         indices = indices[indices > 0]
         indices = indices[0:-1]
-        gold_binary[i].index_fill_(0, indices, 1)
-    gold_binary = gold_binary[:,4:]
+        if len(indices)>0:
+            gold_binary[i].index_fill_(0, indices, 1)
+
+    gold_binary = gold_binary[:,4:] #skip over UNK,SOS,EOS,PAD
     return gold_binary
 
 
