@@ -16,7 +16,7 @@ warnings.filterwarnings("ignore")
 def run_model(model, train_data, valid_data, test_data, crit, optimizer,adv_optimizer,scheduler, opt, data_dict):
 	logger = evals.Logger(opt)
 	
-	valid_accus = []
+	valid_losses = []
 
 	losses = []
 
@@ -62,8 +62,7 @@ def run_model(model, train_data, valid_data, test_data, crit, optimizer,adv_opti
 		torch.save(all_predictions,path.join(opt.model_name,'epochs','valid_preds'+str(epoch_i+1)+'.pt'))
 		torch.save(all_targets,path.join(opt.model_name,'epochs','valid_targets'+str(epoch_i+1)+'.pt'))
 		valid_metrics = evals.compute_metrics(all_predictions,all_targets,0,opt,elapsed,all_metrics=True)
-		valid_accu = valid_metrics['ACC']
-		valid_accus += [valid_accu]
+		valid_losses += [valid_loss]
 
 		################################## TEST ###################################
 		start = time.time()
@@ -84,7 +83,7 @@ def run_model(model, train_data, valid_data, test_data, crit, optimizer,adv_opti
 		losses.append([epoch_i+1,train_loss,valid_loss,test_loss])
 		
 		if not 'test' in opt.model_name and not opt.test_only:
-			utils.save_model(opt,epoch_i,model,valid_accu,valid_accus)
+			utils.save_model(opt,epoch_i,model,valid_loss,valid_losses)
 
 		loss_file.write(str(int(epoch_i+1)))
 		loss_file.write(','+str(train_loss))
