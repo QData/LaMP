@@ -336,12 +336,7 @@ def compute_metrics(all_predictions,all_targets,loss,args,elapsed,all_metrics=Tr
     # optimal_threshold = numpy.mean(numpy.array(optimal_thresholds))
     
 
-    if args.decoder in ['mlp','pmlp','rnn_b','star','dual_linear']:
-        # stop()
-        # for j in range(all_predictions.shape[1]):
-        #     all_predictions[:,j][all_predictions[:,j] < optimal_thresholds[j]] = 0
-        #     all_predictions[:,j][all_predictions[:,j] >= optimal_thresholds[j]] = 1
-
+    if args.decoder in ['mlp','rnn_b','graph']:
         all_predictions[all_predictions < optimal_threshold] = 0
         all_predictions[all_predictions >= optimal_threshold] = 1
     else:
