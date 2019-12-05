@@ -52,7 +52,7 @@ All datasets allow for the usage of the graph encoder (`-encoder 'graph'`) excep
 To use the fully connected label graph, use `-label_mask none`, and to use the edgeless label graph, use `-label_mask inv_eye`.
 
 
-Feel free to open an issue or email jjl5sw@virginia.edu with any questions.
+Feel free to open an issue with any questions.
 
 ## Acknowledgement
 Much of this code was adapted from https://github.com/jadore801120/attention-is-all-you-need-pytorch
