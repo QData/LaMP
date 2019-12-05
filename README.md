@@ -51,6 +51,8 @@ All datasets allow for the usage of the graph encoder (`-encoder 'graph'`) excep
 
 To use the fully connected label graph, use `-label_mask none`, and to use the edgeless label graph, use `-label_mask inv_eye`.
 
+The main.py file evaluates each epoch for all metrics using the default threshold. However, in order to get the final results, you need to find the optimal threshold for each metric on the epoch with the lowest loss. We selected from the following thresholds:
+[0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.10,0.15,0.20,0.25,0.30,0.35,0.40,0.45,0.50,0.55,0.60,0.65,0.70,0.75,0.8,0.85,0.9,0.95]
 
 Feel free to open an issue with any questions.
 
