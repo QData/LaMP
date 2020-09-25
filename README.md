@@ -1,6 +1,6 @@
 <img src="LaMP.png" width="47%" height="47%">
 
-**Neural Message Passing for Multi-Label Classification**<br/>
+**Graph Neural Networks for Multi-Label Classification**<br/>
 Jack Lanchantin, Arshdeep Sekhon, Yanjun Qi<br/>
 ECML-PKDD 2019<br/>
 [[paper]](https://arxiv.org/abs/1904.08049)
