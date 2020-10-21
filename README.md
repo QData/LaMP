@@ -7,6 +7,9 @@ ECML-PKDD 2019<br/>
 [[slides]](https://www.cs.virginia.edu/~jjl5sw/documents/LaMP_slides.pdf)
 [[poster]](https://www.cs.virginia.edu/~jjl5sw/documents/LaMP_poster.pdf)
 
+This repository contains a PyTorch implementation of LaMP from [Neural Message Passing for Multi-Label Classification
+](https://arxiv.org/abs/1904.08049) (Lanchantin, Sekhon, and Qi 2019)
+
 ## Overview
 In this paper, we propose Label Message Passing (LaMP) Networks to model the joint
 prediction of multiple labels by treating labels as nodes on a graph. 
