@@ -28,9 +28,9 @@ the dependencies between labels conditioned on an input.
 ## Usage
 
 ### Process The Data
-Download the data from: [http://www.cs.virginia.edu/~jjl5sw/data/lamp_datasets.tar.gz](http://www.cs.virginia.edu/~jjl5sw/data/lamp_datasets.tar.gz) (745M)
+Download the data from: [http://cs.virginia.edu/yanjun/jack/lamp_datasets.tar.gz](http://cs.virginia.edu/yanjun/jack/lamp_datasets.tar.gz) (745M)
 ```bash
-wget http://www.cs.virginia.edu/~jjl5sw/data/lamp_datasets.tar.gz
+wget http://cs.virginia.edu/yanjun/jack/lamp_datasets.tar.gz
 ```
 
 Untar into the current directory
